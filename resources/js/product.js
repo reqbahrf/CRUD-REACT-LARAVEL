@@ -1,4 +1,13 @@
-class Product {
+import { route } from "vendor/tightenco/ziggy/src/js";
+const PRODUCTS_URL_ENDPOINTS = {
+    GET_SALES: route('get-sales'),
+    GET_ALL_PRODUCTS: route('get-all-products'),
+    ADD_PRODUCT: route('add-product'),
+    SHOW_PRODUCT: route('show-product'),
+    UPDATE_PRODUCT: route('update-product'),
+    DELETE_PRODUCT: route('delete-product'),
+};
+export default class Product {
     /**
      * Initializes a new instance of the Product class, setting up CSRF token and API endpoints.
      *
@@ -147,7 +156,7 @@ class Product {
 
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-            
+
             if (data.message) {
                 return { message: data.message, success: true };
             } else {
@@ -210,7 +219,7 @@ class Product {
                     'Accept': 'application/json'
                 }
             });
-            
+
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return await response.json();
         } catch (error) {
@@ -237,7 +246,7 @@ class Product {
 
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-            
+
             const soldProductNames = data.map((product) => product.product_name);
             const totalQuantitySold = data.reduce(
                 (acc, product) => acc + product.total_qty,
@@ -256,12 +265,12 @@ class Product {
 
     getErrorMessage(error) {
         if (error.response && error.response.json) {
-            return error.response.json().then(data => 
+            return error.response.json().then(data =>
                 `${data.error || data.message}`
             );
         } else if (error.message) {
-            return error.message.includes('HTTP error') ? 
-                'Network error. Please try again later.' : 
+            return error.message.includes('HTTP error') ?
+                'Network error. Please try again later.' :
                 error.message;
         } else {
             return 'An unexpected error occurred';
