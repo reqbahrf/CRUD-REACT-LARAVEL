@@ -16,10 +16,6 @@ export default function Dashboard() {
     const [totalQuantity, setTotalQuantity] = useState(0);
     const [totalPrice, setTotalPrice] = useState(0);
 
-    useEffect(() => {
-       () => getProductsList();
-    }, []);
-
     const getProductsList = async () => {
         try {
             const productsData = await manageProducts.getAllProducts();
@@ -43,6 +39,10 @@ export default function Dashboard() {
         }
     };
 
+    useEffect(() => {
+        getProductsList();
+    }, []);
+
     const handleOrder = (productId) => {
         // Implement order functionality
         console.log("Order product:", productId);
@@ -57,17 +57,15 @@ export default function Dashboard() {
         try {
             await manageProducts.deleteProduct(productId);
             getProductsList(); // Refresh the list
-        } catch (error) {
-
-        }
+        } catch (error) {}
     };
 
-    const handleImageChange = (e, formType) => {
+    const handleImageChange = (e, htmlFormType) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                if (formType === "add") {
+                if (htmlFormType === "add") {
                     setAddPreviewImage(event.target.result);
                 } else {
                     setUpdatePreviewImage(event.target.result);
@@ -85,7 +83,7 @@ export default function Dashboard() {
                         <div className="flex justify-between items-center py-4">
                             <h1 className="text-3xl font-bold cursor-pointer flex items-center">
                                 Malaticas.com
-                                <span className="ml-2 transform transition-transform duration-300 group-hover:rotate-90">
+                                <span className="ml-2 transhtmlForm transition-transhtmlForm duration-300 group-hover:rotate-90">
                                     &gt;
                                 </span>
                             </h1>
@@ -203,18 +201,17 @@ export default function Dashboard() {
                                     version="1.1"
                                     id="Layer_1"
                                     xmlns="http://www.w3.org/2000/svg"
-                                    xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    xmlnsXlink="http://www.w3.org/1999/xlink"
                                     viewBox="0 0 512 512"
-                                    xml:space="preserve"
+                                    xmlSpace="preserve"
                                 >
                                     <g
                                         id="SVGRepo_bgCarrier"
-                                        stroke-width="0"
+                                        strokeWidth="0"
                                     ></g>
                                     <g
                                         id="SVGRepo_tracerCarrier"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
+                                        strokeLinecap="round"
                                     ></g>
                                     <g id="SVGRepo_iconCarrier">
                                         <g>
@@ -278,7 +275,7 @@ export default function Dashboard() {
                     >
                         &#8203;
                     </span>
-                    <div className="inline-block align-bottom bg-white rounded-lg  text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full md:max-w-2xl md:min-h-96 modal-body">
+                    <div className="inline-block align-bottom bg-white rounded-lg  text-left overflow-hidden shadow-xl transhtmlForm transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full md:max-w-2xl md:min-h-96 modal-body">
                         <div className="model-header bg-teal-800 flex items-center justify-between border-b border-green-50  px-2 py-4">
                             <h3 className="text-lg font-extrabold text-white">
                                 Update Product
@@ -296,9 +293,9 @@ export default function Dashboard() {
                                     fill="currentColor"
                                 >
                                     <path
-                                        fill-rule="evenodd"
+                                        fillRule="evenodd"
                                         d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clip-rule="evenodd"
+                                        clipRule="evenodd"
                                     />
                                 </svg>
                             </button>
@@ -306,13 +303,13 @@ export default function Dashboard() {
                         <div className="px-4 pb-4">
                             <form
                                 id="updateProductForm"
-                                enctype="multipart/form-data"
+                                encType="multipart/htmlForm-data"
                                 className="hidden"
                                 data-action="UPDATE"
                             >
                                 <div className="space-y-6">
                                     <div className="mb-4 flex items-center justify-start">
-                                        <label for="image" className="mr-4">
+                                        <label htmlFor="image" className="mr-4">
                                             Upload Image
                                         </label>
                                         <input
@@ -337,7 +334,7 @@ export default function Dashboard() {
                                     </div>
                                     <div>
                                         <label
-                                            for="Product_name"
+                                            htmlFor="Product_name"
                                             className="block text-sm font-medium text-gray-700"
                                         >
                                             Name
@@ -351,7 +348,7 @@ export default function Dashboard() {
                                     </div>
                                     <div>
                                         <label
-                                            for="category"
+                                            htmlFor="category"
                                             className="block text-sm font-medium text-gray-700"
                                         >
                                             Category
@@ -388,7 +385,7 @@ export default function Dashboard() {
                                     <div className="flex items-center w-full">
                                         <div className="w-3/6">
                                             <label
-                                                for="quantity"
+                                                htmlFor="quantity"
                                                 className="block text-sm font-medium text-gray-700"
                                             >
                                                 Quantity
@@ -402,7 +399,7 @@ export default function Dashboard() {
                                         </div>
                                         <div className="w-3/6">
                                             <label
-                                                for="updated-price"
+                                                htmlFor="updated-price"
                                                 className="block text-sm font-medium text-gray-700"
                                             >
                                                 Price
@@ -427,7 +424,7 @@ export default function Dashboard() {
                             </form>
                             <form
                                 id="orderProductForm"
-                                enctype="multipart/form-data"
+                                encType="multipart/htmlForm-data"
                                 className="hidden"
                                 data-action="ORDER"
                             >
@@ -441,7 +438,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="flex flex-col">
                                         <div>
-                                            <label for="ReadonlyProductName">
+                                            <label htmlFor="ReadonlyProductName">
                                                 Product Name
                                             </label>
                                             <input
@@ -449,11 +446,11 @@ export default function Dashboard() {
                                                 className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                                                 name="ReadonlyProductName"
                                                 value=""
-                                                readonly
+                                                readOnly
                                             />
                                         </div>
                                         <div>
-                                            <label for="SelectedQuantity">
+                                            <label htmlFor="SelectedQuantity">
                                                 Quantity
                                             </label>
                                             <select
@@ -463,21 +460,21 @@ export default function Dashboard() {
                                             ></select>
                                         </div>
                                         <div>
-                                            <label for="price">Price:</label>
+                                            <label htmlFor="price">Price:</label>
                                             <input
                                                 type="text"
                                                 name="price"
                                                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                                                readonly
+                                                readOnly
                                             />
                                         </div>
                                         <div>
-                                            <label for="Total">Total:</label>
+                                            <label htmlFor="Total">Total:</label>
                                             <input
                                                 type="text"
                                                 name="Total"
                                                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-bold"
-                                                readonly
+                                                readOnly
                                             />
                                         </div>
                                         <div className="flex justify-end">
@@ -604,7 +601,7 @@ export default function Dashboard() {
                                 <tfoot className="sticky bottom-0 bg-white">
                                     <tr>
                                         <td
-                                            colspan="4"
+                                            colSpan="4"
                                             className="border px-4 py-2 font-bold"
                                         >
                                             Total
@@ -632,10 +629,10 @@ export default function Dashboard() {
                         <div className="rounded-lg bg-white p-4 shadow-lg h-full">
                             <form
                                 id="addProductForm"
-                                enctype="multipart/form-data"
+                                encType="multipart/htmlForm-data"
                             >
                                 <div className="mb-4 flex items-center justify-start">
-                                    <label for="image" className="mr-4">
+                                    <label htmlFor="image" className="mr-4">
                                         Upload Image
                                     </label>
                                     <input
@@ -667,7 +664,7 @@ export default function Dashboard() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label
-                                            for="name"
+                                            htmlFor="name"
                                             className="block text-sm font-medium text-gray-700"
                                         >
                                             Product Name
@@ -681,7 +678,7 @@ export default function Dashboard() {
                                     </div>
                                     <div>
                                         <label
-                                            for="category"
+                                            htmlFor="category"
                                             className="block text-sm font-medium text-gray-700"
                                         >
                                             Category
@@ -717,7 +714,7 @@ export default function Dashboard() {
                                     </div>
                                     <div>
                                         <label
-                                            for="quantity"
+                                            htmlFor="quantity"
                                             className="block text-sm font-medium text-gray-700"
                                         >
                                             Quantity
@@ -731,7 +728,7 @@ export default function Dashboard() {
                                     </div>
                                     <div>
                                         <label
-                                            for="price"
+                                            htmlFor="price"
                                             className="block text-sm font-medium text-gray-700"
                                         >
                                             Price
