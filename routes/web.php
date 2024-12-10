@@ -1,10 +1,11 @@
 <?php
 
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Application;
+use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('Landing');
@@ -23,5 +24,8 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::resource('/Products', ProductController::class);
+
+Route::get('/sold-products', SalesController::class)
+->name('sold-products');
 
 require __DIR__ . '/auth.php';

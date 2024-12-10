@@ -1,7 +1,82 @@
 import { Link, usePage } from "@inertiajs/react";
+import { useState, useEffect } from "react";
+import Product from "@/product";
+import toast from "@/toast";
+import modal from "@/modal";
+
 export default function Dashboard() {
     const { auth } = usePage().props;
     const user = auth.user;
+
+    const manageProducts = new Product();
+
+    const [addPreviewImage, setAddPreviewImage] = useState(null);
+    const [updatePreviewImage, setUpdatePreviewImage] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [totalQuantity, setTotalQuantity] = useState(0);
+    const [totalPrice, setTotalPrice] = useState(0);
+
+    useEffect(() => {
+       () => getProductsList();
+    }, []);
+
+    const getProductsList = async () => {
+        try {
+            const productsData = await manageProducts.getAllProducts();
+            setProducts(productsData);
+
+            const newTotalQuantity = productsData.reduce(
+                (acc, product) => acc + parseInt(product.quantity),
+                0
+            );
+            const newTotalPrice = productsData.reduce(
+                (acc, product) =>
+                    acc +
+                    parseFloat(product.quantity) * parseFloat(product.price),
+                0
+            );
+
+            setTotalQuantity(newTotalQuantity);
+            setTotalPrice(newTotalPrice);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    };
+
+    const handleOrder = (productId) => {
+        // Implement order functionality
+        console.log("Order product:", productId);
+    };
+
+    const handleEdit = (productId) => {
+        // Implement edit functionality
+        console.log("Edit product:", productId);
+    };
+
+    const handleDelete = async (productId) => {
+        try {
+            await manageProducts.deleteProduct(productId);
+            getProductsList(); // Refresh the list
+        } catch (error) {
+
+        }
+    };
+
+    const handleImageChange = (e, formType) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (formType === "add") {
+                    setAddPreviewImage(event.target.result);
+                } else {
+                    setUpdatePreviewImage(event.target.result);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
         <>
             <header className="fixed w-full bg-teal-800 text-white z-50">
@@ -462,7 +537,70 @@ export default function Dashboard() {
                                         <th className="px-4 py-2">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody id="productList"></tbody>
+                                <tbody id="productList">
+                                    {products.map((product) => (
+                                        <tr
+                                            key={product.id}
+                                            data-product-id={product.id}
+                                            className="border"
+                                        >
+                                            <td className="border-y px-4 py-2">
+                                                {product.id}
+                                            </td>
+                                            <td className="border-y px-4 py-2">
+                                                <img
+                                                    src={
+                                                        product.product_image_url
+                                                    }
+                                                    className="object-cover rounded-full mx-auto"
+                                                    style={{
+                                                        width: "90px",
+                                                        height: "90px",
+                                                    }}
+                                                    alt="Product Image"
+                                                />
+                                            </td>
+                                            <td className="border-y px-4 py-2 text-center">
+                                                {product.product_name}
+                                            </td>
+                                            <td className="border-y px-4 py-2 text-center">
+                                                {product.product_categories}
+                                            </td>
+                                            <td className="border-y px-4 py-2 text-center">
+                                                {product.quantity}
+                                            </td>
+                                            <td className="border-y px-4 py-2 text-center">
+                                                {product.price}
+                                            </td>
+                                            <td className="text-center">
+                                                <button
+                                                    onClick={() =>
+                                                        handleOrder(product.id)
+                                                    }
+                                                    className="bg-green-500 rounded-lg ring-1 ring-teal-800 px-2 py-2 font-bold text-white order"
+                                                >
+                                                    Order
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleEdit(product.id)
+                                                    }
+                                                    className="bg-blue-500 rounded-lg ring-1 ring-teal-800 px-2 py-2 font-bold text-white edit"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDelete(product.id)
+                                                    }
+                                                    className="bg-red-500 rounded-lg ring-1 ring-teal-800 px-2 py-2 font-bold text-white delete"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
                                 <tfoot className="sticky bottom-0 bg-white">
                                     <tr>
                                         <td
@@ -475,13 +613,13 @@ export default function Dashboard() {
                                             className="border text-center font-bold"
                                             id="totalQuantity"
                                         >
-                                            25
+                                            {totalQuantity}
                                         </td>
                                         <td
                                             className="border text-center font-bold"
                                             id="totalPrice"
                                         >
-                                            ₱1000
+                                            ₱{totalPrice}
                                         </td>
                                         <td className="border"></td>
                                     </tr>
@@ -503,11 +641,17 @@ export default function Dashboard() {
                                     <input
                                         type="file"
                                         name="product-image"
+                                        onChange={(e) =>
+                                            handleImageChange(e, "add")
+                                        }
                                         accept="image/jpeg, image/png"
                                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 image-input"
                                     />
                                     <button
                                         type="button"
+                                        onClick={() => {
+                                            setAddPreviewImage(null);
+                                        }}
                                         className="p-2 rounded-full bg-red-500 text-white hover:bg-red-700 unselect-image"
                                     >
                                         &#x2715;
@@ -515,7 +659,7 @@ export default function Dashboard() {
                                 </div>
                                 <div className="mb-4 w-full h-40">
                                     <img
-                                        src=""
+                                        src={addPreviewImage}
                                         alt="Image Preview"
                                         className="mx-auto max-w-40 max-h-40 object-cover object-center image-preview"
                                     />

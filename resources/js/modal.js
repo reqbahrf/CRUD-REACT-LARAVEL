@@ -1,55 +1,61 @@
-export default class modal {
+export class Modal {
     /**
-     * Initializes a new instance of the modal class.
-     * @constructor
+     * Creates a new Modal instance
+     * @param {string} modalClass - The class of the modal element (default: 'modal')
      */
-    constructor() {
-      this.modalInstance = $('.modal');
+    constructor(modalClass = "modal") {
+        this.modalElement = document.querySelector(`.${modalClass}`);
     }
 
     /**
      * Displays the update modal for a product.
-     * @returns {jQuery} The jQuery object representing the modal instance.
-     * @description
-     * This method removes the hidden class from the modal, sets the header text to
-     * "Update Product", displays the update product form, and returns the modal instance.
+     * @returns {HTMLElement} The modal element
      */
     getUpdateModalInstance() {
-      this.modalInstance.removeClass('hidden');
-      this.modalInstance.find('h3').text('Update Product');
-      this.modalInstance.find('#updateProductForm').removeClass('hidden');
-      return this.modalInstance;
+        this.modalElement.classList.remove("hidden");
+        this.modalElement.querySelector("h3").textContent = "Update Product";
+        this.modalElement
+            .querySelector("#updateProductForm")
+            .classList.remove("hidden");
+        return this.modalElement;
     }
 
     /**
      * Displays the order modal for a product.
-     * @returns {jQuery} The jQuery object representing the modal instance.
-     * @description
-     * This method removes the hidden class from the modal, sets the header text to
-     * "Order Product", displays the order product form, and returns the modal instance.
+     * @returns {HTMLElement} The modal element
      */
     getOrderModalInstance() {
-      this.modalInstance.removeClass('hidden');
-      this.modalInstance.find('h3').text('Order Product');
-      this.modalInstance.find('#orderProductForm').removeClass('hidden');
-      return this.modalInstance;
+        this.modalElement.classList.remove("hidden");
+        this.modalElement.querySelector("h3").textContent = "Order Product";
+        this.modalElement
+            .querySelector("#orderProductForm")
+            .classList.remove("hidden");
+        return this.modalElement;
     }
 
-     /**
-   * Closes the modal and resets its content.
-   * @description
-   * This method adds the hidden class to the modal, clears the header text,
-   * hides the update and order product forms, unbinds any submit events, and resets
-   * all input and select elements within the forms.
-   */
-  closeModal() {
-    this.modalInstance.addClass('hidden');
-    this.modalInstance.find('h3').text('');
-    const modalForms = this.modalInstance.find(
-      '#updateProductForm, #orderProductForm'
-    );
-    modalForms.off('submit');
-    modalForms.addClass('hidden');
-    modalForms.find('input, select').val('');
-  }
+    /**
+     * Closes the modal and resets its content.
+     */
+    closeModal() {
+        this.modalElement.classList.add("hidden");
+        this.modalElement.querySelector("h3").textContent = "";
+
+        const forms = ["#updateProductForm", "#orderProductForm"];
+        forms.forEach((formId) => {
+            const form = this.modalElement.querySelector(formId);
+            // Remove event listeners
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+
+            // Hide form and reset values
+            newForm.classList.add("hidden");
+            newForm.querySelectorAll("input, select").forEach((input) => {
+                input.value = "";
+            });
+        });
+    }
 }
+
+// Create a singleton instance for easy usage
+const modal = new Modal();
+export default modal;

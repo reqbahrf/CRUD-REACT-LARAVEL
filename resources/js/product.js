@@ -1,11 +1,11 @@
-import { route } from "vendor/tightenco/ziggy/src/js";
+
 const PRODUCTS_URL_ENDPOINTS = {
-    GET_SALES: route('get-sales'),
-    GET_ALL_PRODUCTS: route('get-all-products'),
-    ADD_PRODUCT: route('add-product'),
-    SHOW_PRODUCT: route('show-product'),
-    UPDATE_PRODUCT: route('update-product'),
-    DELETE_PRODUCT: route('delete-product'),
+    GET_SALES: route('sold-products'),
+    GET_ALL_PRODUCTS: route('Products.index'),
+    ADD_PRODUCT: route('Products.store'),
+    SHOW_PRODUCT: route('Products.show', ':id'),
+    UPDATE_PRODUCT: route('Products.update', ':id'),
+    DELETE_PRODUCT: route('Products.destroy', ':id'),
 };
 export default class Product {
     /**
