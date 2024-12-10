@@ -1,6 +1,7 @@
-import { Link } from "@inertiajs/react";
-
+import { Link, usePage } from "@inertiajs/react";
 export default function Dashboard() {
+    const { auth } = usePage().props;
+    const user = auth.user;
     return (
         <>
             <header className="fixed w-full bg-teal-800 text-white z-50">
@@ -168,12 +169,6 @@ export default function Dashboard() {
                     </div>
                 </div>
             </header>
-
-            {/* bg-green-100
-          bg-red-100
-          border
-          border-green-400
-          border-red-400", */}
             <div
                 id="toast"
                 className="fixed top-20 right-0 p-4 bg-green hidden"
@@ -431,7 +426,7 @@ export default function Dashboard() {
                     <div className="md:col-span-4">
                         <div className="rounded-lg bg-white p-4 shadow-lg">
                             <p className="text-2xl font-bold">
-                                Welcome, John Doe
+                                Welcome, {user.name}
                             </p>
                         </div>
                     </div>
