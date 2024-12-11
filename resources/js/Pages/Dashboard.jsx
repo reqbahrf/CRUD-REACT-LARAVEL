@@ -17,7 +17,14 @@ export default function Dashboard() {
         }
     }, [flash, errors]);
 
-    const { data, setData, post, processing, reset } = useForm({
+    // Form htmlFor adding new products
+    const {
+        data: addData,
+        setData: setAddData,
+        post: addPost,
+        processing: addProcessing,
+        reset: addReset,
+    } = useForm({
         product_image: null,
         product_name: "",
         category: "",
@@ -25,8 +32,39 @@ export default function Dashboard() {
         price: "",
     });
 
+    // Form htmlFor editing products
+    const {
+        data: editData,
+        setData: setEditData,
+        put: editPut,
+        processing: editProcessing,
+        reset: editReset,
+    } = useForm({
+        product_image: null,
+        product_name: "",
+        category: "",
+        quantity: "",
+        price: "",
+    });
+
+    // Form htmlFor ordering products
+    const {
+        data: orderData,
+        setData: setOrderData,
+        post: orderPost,
+        processing: orderProcessing,
+        reset: orderReset,
+    } = useForm({
+        product_id: "",
+        quantity: "",
+        order_date: "",
+        status: "pending",
+    });
+
     const [toastMessage, setToastMessage] = useState(null);
     const [toastType, setToastType] = useState("success");
+    const [showModal, setShowModal] = useState(false);
+    const [action, setAction] = useState("");
     const [addPreviewImage, setAddPreviewImage] = useState(null);
     const [updatePreviewImage, setUpdatePreviewImage] = useState(null);
     const [products, setProducts] = useState(initialProducts || []);
@@ -51,12 +89,12 @@ export default function Dashboard() {
 
     const handleAddProductSubmit = (e) => {
         e.preventDefault();
-        post(route("Products.store"), {
+        addPost(route("Products.store"), {
             preserveScroll: true,
             preserveState: false,
             onSuccess: (page) => {
                 console.log(page.props.flash.success);
-                reset();
+                addReset();
                 setAddPreviewImage(null);
                 setProducts(page.props.products);
             },
@@ -66,14 +104,21 @@ export default function Dashboard() {
     const handleImageChange = (e, type) => {
         const file = e.target.files[0];
         if (file) {
-            setData("product_image", file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                if (type === "add") {
+            if (type === "add") {
+                setAddData("product_image", file);
+                const reader = new FileReader();
+                reader.onloadend = () => {
                     setAddPreviewImage(reader.result);
-                }
-            };
-            reader.readAsDataURL(file);
+                };
+                reader.readAsDataURL(file);
+            } else if (type === "edit") {
+                setEditData("product_image", file);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setUpdatePreviewImage(reader.result);
+                };
+                reader.readAsDataURL(file);
+            }
         }
     };
 
@@ -100,6 +145,70 @@ export default function Dashboard() {
             });
         }
     };
+
+    // Method to open update modal
+    const openUpdateModal = (product) => {
+        setShowModal(true);
+        setAction('UPDATE');
+
+        // Populate edit form with product details
+        setEditData({
+            id: product.id,
+            product_name: product.product_name,
+            product_categories: product.product_categories,
+            quantity: product.quantity,
+            price: product.price,
+            product_image: product.product_image
+        });
+
+        // Set preview image if exists
+        if (product.product_image) {
+            setUpdatePreviewImage(product.product_image);
+        }
+    };
+
+    // Method to open order modal
+    const openOrderModal = (product) => {
+        setShowModal(true);
+        setAction('ORDER');
+
+        // Populate order form with product details
+        setOrderData({
+            product_id: product.id,
+            product_name: product.product_name,
+            price: product.price,
+            status: 'pending'
+        });
+
+        // Set product details in readonly fields
+        // You might want to add corresponding refs or state for these
+        document.querySelector('.orderProduct').src = product.product_image;
+        // Additional logic to populate other readonly fields
+    };
+
+    // Method to close modal
+    const closeModal = () => {
+        setShowModal(false);
+        setAction('');
+        // Reset form data if needed
+        editReset();
+        orderReset();
+    };
+
+    // Add event listener for modal close button
+    useEffect(() => {
+        const closeButtons = document.querySelectorAll('[data-model="close"]');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closeModal);
+        });
+
+        // Cleanup event listeners
+        return () => {
+            closeButtons.forEach(button => {
+                button.removeEventListener('click', closeModal);
+            });
+        };
+    }, []);
 
     return (
         <>
@@ -272,6 +381,276 @@ export default function Dashboard() {
                     </div>
                 </div>
             </header>
+
+            <div className={`fixed z-50 inset-0 overflow-y-auto modal ${!showModal ? "hidden" : ""}`}>
+                <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                    <div
+                        className="fixed inset-0 transition-opacity"
+                        aria-hidden="true"
+                    >
+                        <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                    </div>
+                    <span
+                        className="hidden sm:inline-block sm:align-middle sm:h-screen"
+                        aria-hidden="true"
+                    >
+                        &#8203;
+                    </span>
+                    <div className="inline-block align-bottom bg-white rounded-lg  text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full md:max-w-2xl md:min-h-96 modal-body">
+                        <div className="model-header bg-teal-800 flex items-center justify-between border-b border-green-50  px-2 py-4">
+                            <h3 className="text-lg font-extrabold text-white">
+                                Update Product
+                            </h3>
+                            <button
+                                type="button"
+                                data-model="close"
+                                className="text-gray-400 hover:text-gray-500"
+                            >
+                                <span className="sr-only">Close</span>
+                                <svg
+                                    className="h-5 w-5"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="px-4 pb-4">
+                           <form
+                                id="updateProductForm"
+                                enctype="multipart/form-data"
+                                className={`${action === 'UPDATE' ? 'block' : 'hidden'}`}
+                                data-action="UPDATE"
+                            >
+                                <div className="space-y-6">
+                                    <div className="mb-4 flex items-center justify-start">
+                                        <label htmlFor="image" className="mr-4">
+                                            Upload Image
+                                        </label>
+                                        <input
+                                            type="file"
+                                            value={editData["product_image"]}
+                                            onChange={(e) =>
+                                                handleImageChange(e, "edit")
+                                            }
+                                            id="image"
+                                            name="product-image"
+                                            accept="image/jpeg, image/png"
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 image-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="p-2 rounded-full bg-red-500 text-white hover:bg-red-700 unselect-image"
+                                        >
+                                            &#x2715;
+                                        </button>
+                                    </div>
+                                    <div className="mb-4">
+                                        <img
+                                            src={updatePreviewImage}
+                                            alt="Image Preview"
+                                            className="w-3/6 h-3/6 object-cover object-center mx-auto image-preview"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            htmlFor="Product_name"
+                                            className="block text-sm font-medium text-gray-700"
+                                        >
+                                            Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="Product_name"
+                                            value={editData["product_name"]}
+                                            onChange={(e) =>
+                                                setEditData(
+                                                    "product_name",
+                                                    e.target.value
+                                                )
+                                            }
+                                            id="Product_name"
+                                            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            htmlFor="category"
+                                            className="block text-sm font-medium text-gray-700"
+                                        >
+                                            Category
+                                        </label>
+                                        <select
+                                            name="category"
+                                            id="category"
+                                            value={editData["product_categories"]}
+                                            onChange={(e) =>
+                                                setEditData(
+                                                    "product_categories",
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                        >
+                                            <option value="">
+                                                Select a Category
+                                            </option>
+                                            <option value="Building Materials">
+                                                Building Materials
+                                            </option>
+                                            <option value="Tools">Tools</option>
+                                            <option value="Plumbing Supplies">
+                                                Plumbing Supplies
+                                            </option>
+                                            <option value="Electrical Supplies">
+                                                Electrical Supplies
+                                            </option>
+                                            <option value="Paint and Decorating Supplies">
+                                                Paint and Decorating Supplies
+                                            </option>
+                                            <option value="Hardware and Fasteners">
+                                                Hardware and Fasteners
+                                            </option>
+                                            <option value="Lawn and Garden Supplies">
+                                                Lawn and Garden Supplies
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center w-full">
+                                        <div className="w-3/6">
+                                            <label
+                                                htmlFor="quantity"
+                                                className="block text-sm font-medium text-gray-700"
+                                            >
+                                                Quantity
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="quantity"
+                                                value={editData["quantity"]}
+                                                onChange={(e) =>
+                                                    setEditData(
+                                                        "quantity",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                id="quantity"
+                                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm number-only"
+                                            />
+                                        </div>
+                                        <div className="w-3/6">
+                                            <label
+                                                htmlFor="updated-price"
+                                                className="block text-sm font-medium text-gray-700"
+                                            >
+                                                Price
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="price"
+                                                value={editData["price"]}
+                                                onChange={(e) =>
+                                                    setEditData(
+                                                        "price",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                id="price"
+                                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm number-only"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button
+                                            type="submit"
+                                            className="mt-4 w-2/4 rounded-full bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
+                                        >
+                                            Update
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            <form
+                                id="orderProductForm"
+                                enctype="multipart/form-data"
+                                className={`${action === 'ORDER' ? 'block' : 'hidden'}`}
+                                data-action="ORDER"
+                            >
+                                <div className="grid sm:grid-cols-1 md:grid-cols-2">
+                                    <div>
+                                        <img
+                                            src=""
+                                            className="orderProduct"
+                                            alt="Product Image"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <div>
+                                            <label htmlFor="ReadonlyProductName">
+                                                Product Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                                                name="ReadonlyProductName"
+                                                value={orderData["product_name"]}
+                                                readOnly
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="SelectedQuantity">
+                                                Quantity
+                                            </label>
+                                            <select
+                                                name="Quantity"
+                                                id="SelectedQuantity"
+                                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 "
+                                            ></select>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="price">
+                                                Price:
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="price"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                                                readOnly
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="Total">
+                                                Total:
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="Total"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-bold"
+                                                readOnly
+                                            />
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="submit"
+                                                className="mt-4 w-2/4 rounded-full bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
+                                            >
+                                                Place Order
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className="h-auto py-4">
                 <div className="grid gap-4 px-6 pt-20 md:grid-cols-4">
                     <div className="md:col-span-4">
@@ -351,7 +730,7 @@ export default function Dashboard() {
                                             <td className="text-center">
                                                 <button
                                                     onClick={() =>
-                                                        handleOrder(product.id)
+                                                        openOrderModal(product)
                                                     }
                                                     className="bg-green-500 rounded-lg ring-1 ring-teal-800 px-2 py-2 font-bold text-white order"
                                                 >
@@ -359,7 +738,7 @@ export default function Dashboard() {
                                                 </button>
                                                 <button
                                                     onClick={() =>
-                                                        handleEdit(product.id)
+                                                        openUpdateModal(product)
                                                     }
                                                     className="bg-blue-500 rounded-lg ring-1 ring-teal-800 px-2 py-2 font-bold text-white edit"
                                                 >
@@ -453,9 +832,9 @@ export default function Dashboard() {
                                             type="text"
                                             name="product_name"
                                             id="name"
-                                            value={data["product_name"]}
+                                            value={addData["product_name"]}
                                             onChange={(e) =>
-                                                setData(
+                                                setAddData(
                                                     "product_name",
                                                     e.target.value
                                                 )
@@ -478,9 +857,9 @@ export default function Dashboard() {
                                         <select
                                             name="category"
                                             id="category"
-                                            value={data.category}
+                                            value={addData.category}
                                             onChange={(e) =>
-                                                setData(
+                                                setAddData(
                                                     "category",
                                                     e.target.value
                                                 )
@@ -522,9 +901,9 @@ export default function Dashboard() {
                                             type="text"
                                             name="quantity"
                                             id="quantity"
-                                            value={data.quantity}
+                                            value={addData.quantity}
                                             onChange={(e) =>
-                                                setData(
+                                                setAddData(
                                                     "quantity",
                                                     e.target.value
                                                 )
@@ -548,9 +927,12 @@ export default function Dashboard() {
                                             type="text"
                                             name="price"
                                             id="price"
-                                            value={data.price}
+                                            value={addData.price}
                                             onChange={(e) =>
-                                                setData("price", e.target.value)
+                                                setAddData(
+                                                    "price",
+                                                    e.target.value
+                                                )
                                             }
                                             className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm number-only"
                                         />
@@ -563,10 +945,10 @@ export default function Dashboard() {
                                     <div className="col-span-2">
                                         <button
                                             type="submit"
-                                            disabled={processing}
+                                            disabled={addProcessing}
                                             className="mt-4 w-full rounded-full bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700 disabled:opacity-50"
                                         >
-                                            {processing
+                                            {addProcessing
                                                 ? "Adding..."
                                                 : "Add Product"}
                                         </button>
