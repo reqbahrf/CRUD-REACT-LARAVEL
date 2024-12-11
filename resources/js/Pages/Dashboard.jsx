@@ -1,7 +1,6 @@
-import { Link, useForm, usePage } from "@inertiajs/react";
+import { Link, useForm, usePage, router } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import Toast from "@/Components/toast";
-import toast from "@/toast";
 
 export default function Dashboard() {
     const { auth, products: initialProducts } = usePage().props;
@@ -47,7 +46,7 @@ export default function Dashboard() {
                 setAddPreviewImage(null);
                 setProducts(page.props.products);
                 if (page.props.flash.success) {
-                    toast.showToast(
+                    window.toast.showToast(
                         "bg-green-100 border border-green-400",
                         page.props.flash.success
                     );
@@ -55,7 +54,7 @@ export default function Dashboard() {
             },
             onError: (errors) => {
                 if (errors.error) {
-                    toast.showToast(
+                    window.toast.showToast(
                         "bg-red-100 border border-red-400",
                         errors.error
                     );
@@ -91,14 +90,37 @@ export default function Dashboard() {
     };
 
     const handleDelete = async (productId) => {
-        try {
-            // Implement delete functionality
-        } catch (error) {}
+        if (confirm("Are you sure you want to delete this product?")) {
+            router.delete(route("Products.destroy", productId), {
+                preserveScroll: true,
+                preserveState: false,
+                onSuccess: (page) => {
+                    setProducts(page.props.products);
+                    if (page.props.flash.success) {
+                        window.toast.showToast(
+                            "bg-green-100 border border-green-400",
+                            page.props.flash.success
+                        );
+                    }
+                },
+                onError: (errors) => {
+                    if (errors.error) {
+                        window.toast.showToast(
+                            "bg-red-100 border border-red-400",
+                            errors.error
+                        );
+                    }
+                },
+            });
+        }
     };
+
+    const Toast = () => {
+
+    }
 
     return (
         <>
-        <Toast />
             <header className="fixed w-full bg-teal-800 text-white z-50">
                 <div className="container mx-auto flex items-center justify-between px-4 py-2">
                     <div className="relative group">
@@ -263,9 +285,6 @@ export default function Dashboard() {
                     </div>
                 </div>
             </header>
-
-
-
             <div className="fixed z-50 inset-0 overflow-y-auto modal hidden">
                 <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                     <div
