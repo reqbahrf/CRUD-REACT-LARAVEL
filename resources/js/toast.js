@@ -1,4 +1,4 @@
-export class Toast {
+class Toast {
     /**
      * Creates a new Toast instance
      * @param {string} toastId - The ID of the toast element (default: 'toast')

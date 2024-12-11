@@ -7,10 +7,11 @@ use App\Models\Product;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
-      /**
+    /**
      * Display a listing of the products.
      *
      * @return \Illuminate\Http\JsonResponse
@@ -25,7 +26,9 @@ class ProductController extends Controller
             return $product;
         });
 
-        return response()->json($products, 200);
+        return Inertia::render('Dashboard', [
+            'products' => $products
+        ]);
     }
 
     /**
@@ -34,38 +37,45 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'product-image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',  // Validate the image
-            'product-name' => 'required|string|unique:products_info,product_name',
+            'product_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'product_name' => 'required|string|unique:products_info,product_name',
             'category' => 'required|string|max:255',
             'quantity' => 'required|integer',
             'price' => 'required|numeric',
         ]);
 
         try {
-
-            if ($request->hasFile('product-image')) {
-                $image = $request->file('product-image');
-                $fileName = Str::slug($request->input('product-name')) . '.' . $image->getClientOriginalExtension();
+            if ($request->hasFile('product_image')) {
+                $image = $request->file('product_image');
+                $fileName = Str::slug($request->input('product_name')) . '.' . $image->getClientOriginalExtension();
                 $imagePath = Storage::disk('public')->putFileAs('Products-image', $image, uniqid() . '_' . $fileName);
-
                 $validatedData['product_image_url'] = $imagePath;
             }
 
-            // Create the new product
-           Product::create([
+            Product::create([
                 'product_image_url' => $validatedData['product_image_url'],
-                'product_name' => $validatedData['product-name'],
+                'product_name' => $validatedData['product_name'],
                 'product_categories' => $validatedData['category'],
                 'quantity' => $validatedData['quantity'],
                 'price' => $validatedData['price'],
             ]);
 
+            // Get updated products list
+            $products = Product::get();
+            $products->transform(function ($product) {
+                if ($product->product_image_url) {
+                    $product->product_image_url = asset('storage/' . $product->product_image_url);
+                }
+                return $product;
+            });
 
-            return response()->json(['message' => 'Product Added Successfully'], 201);
+            return Inertia::render('Dashboard', [
+                'products' => $products,
+                'flash' => ['success' => 'Product Added Successfully']
+            ]);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
     }
 
     /**
@@ -82,7 +92,6 @@ class ProductController extends Controller
         } catch (Exception $e) {
             return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
-
     }
 
     /**
@@ -111,7 +120,7 @@ class ProductController extends Controller
         ]);
         try {
 
-            switch($validated['Action']) {
+            switch ($validated['Action']) {
                 case 'UPDATE':
                     return $this->updateProduct($id, $validated);
                     break;
@@ -119,12 +128,9 @@ class ProductController extends Controller
                     return $this->orderProduct($id, $validated);
                     break;
             }
-
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
-
-
     }
 
     /**
@@ -145,17 +151,17 @@ class ProductController extends Controller
         }
     }
 
-/**
- * Updates the specified product in the database with the given validated data.
- *
- * @param int $id The ID of the product to update.
- * @param array $validated The validated data containing the updated product details, including optional image.
- *
- * @return \Illuminate\Http\JsonResponse JSON response indicating success or error message.
- *
- * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the product is not found.
- * @throws \Exception If there is an error during the update process.
- */
+    /**
+     * Updates the specified product in the database with the given validated data.
+     *
+     * @param int $id The ID of the product to update.
+     * @param array $validated The validated data containing the updated product details, including optional image.
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response indicating success or error message.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the product is not found.
+     * @throws \Exception If there is an error during the update process.
+     */
     protected function updateProduct($id, $validated)
     {
         try {
@@ -181,46 +187,45 @@ class ProductController extends Controller
             $product->update($updateData);
 
             return response()->json(['message' => 'Product Updated Successfully'], 200);
-
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-/**
- * Places an order for a specified product, updates its quantity, and records sales information.
- *
- * @param int $id The ID of the product to order.
- * @param array $validated The validated data containing ordered quantity and total price.
- *
- * @return \Illuminate\Http\JsonResponse JSON response indicating success or error message.
- *
- * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the product is not found.
- * @throws \Exception If there is an error during the ordering process.
- */
-    protected function orderProduct($id,$validated)
+    /**
+     * Places an order for a specified product, updates its quantity, and records sales information.
+     *
+     * @param int $id The ID of the product to order.
+     * @param array $validated The validated data containing ordered quantity and total price.
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response indicating success or error message.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the product is not found.
+     * @throws \Exception If there is an error during the ordering process.
+     */
+    protected function orderProduct($id, $validated)
     {
         try {
-                    $orderedProductQuantity = $validated['Ordered_quantity'];
-                    $orderedProductTotalPrice = $validated['Ordered_Total'];
-                    $product = Product::find($id);
+            $orderedProductQuantity = $validated['Ordered_quantity'];
+            $orderedProductTotalPrice = $validated['Ordered_Total'];
+            $product = Product::find($id);
 
-                    if ($orderedProductQuantity > $product->quantity) {
-                        return response()->json(['error' => 'Insufficient quantity in stock'], 422);
-                    }
+            if ($orderedProductQuantity > $product->quantity) {
+                return response()->json(['error' => 'Insufficient quantity in stock'], 422);
+            }
 
-                    $product->quantity -= $orderedProductQuantity;
-                    $product->salesInfo()->create(
-                        [
-                            'product_name' => $product->product_name,
-                            'total_qty' =>  $orderedProductQuantity,
-                            'total_price' => $orderedProductTotalPrice
-                        ]);
-                    $product->save();
-                    return response()->json(['message' => 'Product Ordered Successfully'], 200);
+            $product->quantity -= $orderedProductQuantity;
+            $product->salesInfo()->create(
+                [
+                    'product_name' => $product->product_name,
+                    'total_qty' =>  $orderedProductQuantity,
+                    'total_price' => $orderedProductTotalPrice
+                ]
+            );
+            $product->save();
+            return response()->json(['message' => 'Product Ordered Successfully'], 200);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
-
     }
 }
