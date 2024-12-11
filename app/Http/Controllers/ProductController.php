@@ -111,7 +111,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'product-image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',  // Validate the image
             'Action' => 'required|in:UPDATE,ORDER',
-            'name' => 'required_if:Action,UPDATE',
+            'product_name' => 'required_if:Action,UPDATE',
             'category' => 'required_if:Action,UPDATE',
             'quantity' => 'required_if:Action,UPDATE|numeric',
             'price' => 'required_if:Action,UPDATE|numeric',
@@ -129,7 +129,7 @@ class ProductController extends Controller
                     break;
             }
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return redirect()->back()->withErrors(['error' => 'Server Error']);
         }
     }
 
@@ -171,7 +171,7 @@ class ProductController extends Controller
             $product->product_image_url && Storage::disk('public')->delete($product->product_image_url);
 
             $updateData = [
-                'product_name' => $validated['name'],
+                'product_name' => $validated['product_name'],
                 'product_categories' => $validated['category'],
                 'quantity' => $validated['quantity'],
                 'price' => $validated['price'],
@@ -188,9 +188,9 @@ class ProductController extends Controller
 
             $product->update($updateData);
 
-            return response()->json(['message' => 'Product Updated Successfully'], 200);
+            return redirect()->back()->with('success', 'Product updated successfully.');
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 

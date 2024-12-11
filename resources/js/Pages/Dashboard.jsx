@@ -12,6 +12,7 @@ export default function Dashboard() {
             setToastType("success");
         }
         if (errors.error) {
+            console.log(errors.error);
             setToastMessage(errors.error);
             setToastType("error");
         }
@@ -40,6 +41,7 @@ export default function Dashboard() {
         processing: editProcessing,
         reset: editReset,
     } = useForm({
+        action: "UPDATE",
         product_image: null,
         product_name: "",
         category: "",
@@ -129,9 +131,22 @@ export default function Dashboard() {
         console.log("Order product:", productId);
     };
 
-    const handleEdit = (productId) => {
+    const handleEdit = (e, productId) => {
+        e.preventDefault();
         // Implement edit functionality
-        console.log("Edit product:", productId);
+       if(confirm("Are you sure you want to edit this product?")){
+        editPut(route("Products.update", productId), {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (page) => {
+                console.log(page);
+                setProducts(page.props.products);
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+        });
+       }
     };
 
     const handleDelete = async (productId) => {
@@ -149,47 +164,47 @@ export default function Dashboard() {
     // Method to open update modal
     const openUpdateModal = (product) => {
         setShowModal(true);
-        setAction('UPDATE');
+        setAction("UPDATE");
 
         // Populate edit form with product details
         setEditData({
-            id: product.id,
+            Action: "UPDATE",
+            product_id: product.id,
             product_name: product.product_name,
-            product_categories: product.product_categories,
+            category: product.product_categories,
             quantity: product.quantity,
             price: product.price,
-            product_image: product.product_image
         });
 
         // Set preview image if exists
-        if (product.product_image) {
-            setUpdatePreviewImage(product.product_image);
+        if (product.product_image_url) {
+            setUpdatePreviewImage(product.product_image_url);
         }
     };
 
     // Method to open order modal
     const openOrderModal = (product) => {
         setShowModal(true);
-        setAction('ORDER');
+        setAction("ORDER");
 
         // Populate order form with product details
         setOrderData({
             product_id: product.id,
             product_name: product.product_name,
             price: product.price,
-            status: 'pending'
+            status: "pending",
         });
 
         // Set product details in readonly fields
         // You might want to add corresponding refs or state for these
-        document.querySelector('.orderProduct').src = product.product_image;
+        document.querySelector(".orderProduct").src = product.product_image;
         // Additional logic to populate other readonly fields
     };
 
     // Method to close modal
     const closeModal = () => {
         setShowModal(false);
-        setAction('');
+        setAction("");
         // Reset form data if needed
         editReset();
         orderReset();
@@ -198,14 +213,14 @@ export default function Dashboard() {
     // Add event listener for modal close button
     useEffect(() => {
         const closeButtons = document.querySelectorAll('[data-model="close"]');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', closeModal);
+        closeButtons.forEach((button) => {
+            button.addEventListener("click", closeModal);
         });
 
         // Cleanup event listeners
         return () => {
-            closeButtons.forEach(button => {
-                button.removeEventListener('click', closeModal);
+            closeButtons.forEach((button) => {
+                button.removeEventListener("click", closeModal);
             });
         };
     }, []);
@@ -382,7 +397,11 @@ export default function Dashboard() {
                 </div>
             </header>
 
-            <div className={`fixed z-50 inset-0 overflow-y-auto modal ${!showModal ? "hidden" : ""}`}>
+            <div
+                className={`fixed z-50 inset-0 overflow-y-auto modal ${
+                    !showModal ? "hidden" : ""
+                }`}
+            >
                 <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                     <div
                         className="fixed inset-0 transition-opacity"
@@ -422,11 +441,14 @@ export default function Dashboard() {
                             </button>
                         </div>
                         <div className="px-4 pb-4">
-                           <form
+                            <form
                                 id="updateProductForm"
                                 enctype="multipart/form-data"
-                                className={`${action === 'UPDATE' ? 'block' : 'hidden'}`}
+                                className={`${
+                                    action === "UPDATE" ? "block" : "hidden"
+                                }`}
                                 data-action="UPDATE"
+                                onSubmit={(e) => handleEdit(e, editData["product_id"])}
                             >
                                 <div className="space-y-6">
                                     <div className="mb-4 flex items-center justify-start">
@@ -435,7 +457,11 @@ export default function Dashboard() {
                                         </label>
                                         <input
                                             type="file"
-                                            value={editData["product_image"]}
+                                            ref={(input) =>
+                                                input &&
+                                                input.value === "" &&
+                                                editData.product_image === null
+                                            }
                                             onChange={(e) =>
                                                 handleImageChange(e, "edit")
                                             }
@@ -489,10 +515,12 @@ export default function Dashboard() {
                                         <select
                                             name="category"
                                             id="category"
-                                            value={editData["product_categories"]}
+                                            value={
+                                                editData["category"]
+                                            }
                                             onChange={(e) =>
                                                 setEditData(
-                                                    "product_categories",
+                                                    "category",
                                                     e.target.value
                                                 )
                                             }
@@ -569,9 +597,10 @@ export default function Dashboard() {
                                     <div className="flex justify-end">
                                         <button
                                             type="submit"
+                                            disabled={editProcessing}
                                             className="mt-4 w-2/4 rounded-full bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
                                         >
-                                            Update
+                                            {editProcessing ? "Processing..." : "Update"}
                                         </button>
                                     </div>
                                 </div>
@@ -579,7 +608,9 @@ export default function Dashboard() {
                             <form
                                 id="orderProductForm"
                                 enctype="multipart/form-data"
-                                className={`${action === 'ORDER' ? 'block' : 'hidden'}`}
+                                className={`${
+                                    action === "ORDER" ? "block" : "hidden"
+                                }`}
                                 data-action="ORDER"
                             >
                                 <div className="grid sm:grid-cols-1 md:grid-cols-2">
@@ -599,7 +630,9 @@ export default function Dashboard() {
                                                 type="text"
                                                 className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                                                 name="ReadonlyProductName"
-                                                value={orderData["product_name"]}
+                                                value={
+                                                    orderData["product_name"]
+                                                }
                                                 readOnly
                                             />
                                         </div>
