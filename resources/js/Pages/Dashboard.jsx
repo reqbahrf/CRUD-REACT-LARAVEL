@@ -67,6 +67,7 @@ export default function Dashboard() {
     const [toastType, setToastType] = useState("success");
     const [showModal, setShowModal] = useState(false);
     const [action, setAction] = useState("");
+    const [orderPreviewImage, setOrderPreviewImage] = useState(null);
     const [addPreviewImage, setAddPreviewImage] = useState(null);
     const [updatePreviewImage, setUpdatePreviewImage] = useState(null);
     const [products, setProducts] = useState(initialProducts || []);
@@ -195,10 +196,7 @@ export default function Dashboard() {
             status: "pending",
         });
 
-        // Set product details in readonly fields
-        // You might want to add corresponding refs or state for these
-        document.querySelector(".orderProduct").src = product.product_image;
-        // Additional logic to populate other readonly fields
+        setOrderPreviewImage(product.product_image_url);
     };
 
     // Method to close modal
@@ -616,7 +614,7 @@ export default function Dashboard() {
                                 <div className="grid sm:grid-cols-1 md:grid-cols-2">
                                     <div>
                                         <img
-                                            src=""
+                                            src={orderPreviewImage}
                                             className="orderProduct"
                                             alt="Product Image"
                                         />
