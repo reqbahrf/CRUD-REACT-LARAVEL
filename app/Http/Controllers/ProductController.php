@@ -140,14 +140,16 @@ class ProductController extends Controller
     {
         try {
             $product = Product::findOrFail($id);
-            if (!$product) {
-                return response()->json(['message' => 'Product not found'], 404);
+
+            if ($product->product_image_url) {
+                Storage::disk('public')->delete($product->product_image_url);
             }
-            $product->product_image_url && Storage::disk('public')->delete($product->product_image_url);
+
             $product->delete();
-            return response()->json(['message' => 'Product Deleted Successfully'], 200);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+
+            return redirect()->back()->with('success', 'Product deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to delete the product.']);
         }
     }
 

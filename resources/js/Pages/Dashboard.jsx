@@ -1,12 +1,23 @@
 import { Link, useForm, usePage, router } from "@inertiajs/react";
 import { useState, useEffect } from "react";
-import Toast from "@/Components/toast";
+import Toast from "@/Components/Toast";
 
 export default function Dashboard() {
-    const { auth, products: initialProducts } = usePage().props;
+    const { auth, products: initialProducts, flash, errors } = usePage().props;
     const user = auth.user;
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    useEffect(() => {
+        if (flash.success) {
+            setToastMessage(flash.success);
+            setToastType("success");
+        }
+        if (errors.error) {
+            setToastMessage(errors.error);
+            setToastType("error");
+        }
+    }, [flash, errors]);
+
+    const { data, setData, post, processing, reset } = useForm({
         product_image: null,
         product_name: "",
         category: "",
@@ -14,6 +25,8 @@ export default function Dashboard() {
         price: "",
     });
 
+    const [toastMessage, setToastMessage] = useState(null);
+    const [toastType, setToastType] = useState("success");
     const [addPreviewImage, setAddPreviewImage] = useState(null);
     const [updatePreviewImage, setUpdatePreviewImage] = useState(null);
     const [products, setProducts] = useState(initialProducts || []);
@@ -42,23 +55,10 @@ export default function Dashboard() {
             preserveScroll: true,
             preserveState: false,
             onSuccess: (page) => {
+                console.log(page.props.flash.success);
                 reset();
                 setAddPreviewImage(null);
                 setProducts(page.props.products);
-                if (page.props.flash.success) {
-                    window.toast.showToast(
-                        "bg-green-100 border border-green-400",
-                        page.props.flash.success
-                    );
-                }
-            },
-            onError: (errors) => {
-                if (errors.error) {
-                    window.toast.showToast(
-                        "bg-red-100 border border-red-400",
-                        errors.error
-                    );
-                }
             },
         });
     };
@@ -96,31 +96,18 @@ export default function Dashboard() {
                 preserveState: false,
                 onSuccess: (page) => {
                     setProducts(page.props.products);
-                    if (page.props.flash.success) {
-                        window.toast.showToast(
-                            "bg-green-100 border border-green-400",
-                            page.props.flash.success
-                        );
-                    }
-                },
-                onError: (errors) => {
-                    if (errors.error) {
-                        window.toast.showToast(
-                            "bg-red-100 border border-red-400",
-                            errors.error
-                        );
-                    }
                 },
             });
         }
     };
 
-    const Toast = () => {
-
-    }
-
     return (
         <>
+            <Toast
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setToastMessage(null)}
+            />
             <header className="fixed w-full bg-teal-800 text-white z-50">
                 <div className="container mx-auto flex items-center justify-between px-4 py-2">
                     <div className="relative group">
@@ -285,242 +272,6 @@ export default function Dashboard() {
                     </div>
                 </div>
             </header>
-            <div className="fixed z-50 inset-0 overflow-y-auto modal hidden">
-                <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                    <div
-                        className="fixed inset-0 transition-opacity"
-                        aria-hidden="true"
-                    >
-                        <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-                    </div>
-                    <span
-                        className="hidden sm:inline-block sm:align-middle sm:h-screen"
-                        aria-hidden="true"
-                    >
-                        &#8203;
-                    </span>
-                    <div className="inline-block align-bottom bg-white rounded-lg  text-left overflow-hidden shadow-xl transhtmlForm transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full md:max-w-2xl md:min-h-96 modal-body">
-                        <div className="model-header bg-teal-800 flex items-center justify-between border-b border-green-50  px-2 py-4">
-                            <h3 className="text-lg font-extrabold text-white">
-                                Update Product
-                            </h3>
-                            <button
-                                type="button"
-                                data-model="close"
-                                className="text-gray-400 hover:text-gray-500"
-                            >
-                                <span className="sr-only">Close</span>
-                                <svg
-                                    className="h-5 w-5"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                >
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="px-4 pb-4">
-                            <form
-                                id="updateProductForm"
-                                encType="multipart/htmlForm-data"
-                                className="hidden"
-                                data-action="UPDATE"
-                            >
-                                <div className="space-y-6">
-                                    <div className="mb-4 flex items-center justify-start">
-                                        <label htmlFor="image" className="mr-4">
-                                            Upload Image
-                                        </label>
-                                        <input
-                                            type="file"
-                                            name="product-image"
-                                            accept="image/jpeg, image/png"
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 image-input"
-                                        />
-                                        <button
-                                            type="button"
-                                            className="p-2 rounded-full bg-red-500 text-white hover:bg-red-700 unselect-image"
-                                        >
-                                            &#x2715;
-                                        </button>
-                                    </div>
-                                    <div className="mb-4">
-                                        <img
-                                            src=""
-                                            alt="Image Preview"
-                                            className="w-3/6 h-3/6 object-cover object-center mx-auto image-preview"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label
-                                            htmlFor="Product_name"
-                                            className="block text-sm font-medium text-gray-700"
-                                        >
-                                            Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            id="Product_name"
-                                            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label
-                                            htmlFor="category"
-                                            className="block text-sm font-medium text-gray-700"
-                                        >
-                                            Category
-                                        </label>
-                                        <select
-                                            name="category"
-                                            id="category"
-                                            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                        >
-                                            <option value="">
-                                                Select a Category
-                                            </option>
-                                            <option value="Building Materials">
-                                                Building Materials
-                                            </option>
-                                            <option value="Tools">Tools</option>
-                                            <option value="Plumbing Supplies">
-                                                Plumbing Supplies
-                                            </option>
-                                            <option value="Electrical Supplies">
-                                                Electrical Supplies
-                                            </option>
-                                            <option value="Paint and Decorating Supplies">
-                                                Paint and Decorating Supplies
-                                            </option>
-                                            <option value="Hardware and Fasteners">
-                                                Hardware and Fasteners
-                                            </option>
-                                            <option value="Lawn and Garden Supplies">
-                                                Lawn and Garden Supplies
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div className="flex items-center w-full">
-                                        <div className="w-3/6">
-                                            <label
-                                                htmlFor="quantity"
-                                                className="block text-sm font-medium text-gray-700"
-                                            >
-                                                Quantity
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="quantity"
-                                                id="quantity"
-                                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm number-only"
-                                            />
-                                        </div>
-                                        <div className="w-3/6">
-                                            <label
-                                                htmlFor="updated-price"
-                                                className="block text-sm font-medium text-gray-700"
-                                            >
-                                                Price
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="price"
-                                                id="price"
-                                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm number-only"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <button
-                                            type="submit"
-                                            className="mt-4 w-2/4 rounded-full bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
-                                        >
-                                            Update
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                            <form
-                                id="orderProductForm"
-                                encType="multipart/htmlForm-data"
-                                className="hidden"
-                                data-action="ORDER"
-                            >
-                                <div className="grid sm:grid-cols-1 md:grid-cols-2">
-                                    <div>
-                                        <img
-                                            src=""
-                                            className="orderProduct"
-                                            alt="Product Image"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <div>
-                                            <label htmlFor="ReadonlyProductName">
-                                                Product Name
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                                name="ReadonlyProductName"
-                                                value=""
-                                                readOnly
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="SelectedQuantity">
-                                                Quantity
-                                            </label>
-                                            <select
-                                                name="Quantity"
-                                                id="SelectedQuantity"
-                                                className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                                            ></select>
-                                        </div>
-                                        <div>
-                                            <label htmlFor="price">
-                                                Price:
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="price"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                                                readOnly
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="Total">
-                                                Total:
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="Total"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 font-bold"
-                                                readOnly
-                                            />
-                                        </div>
-                                        <div className="flex justify-end">
-                                            <button
-                                                type="submit"
-                                                className="mt-4 w-2/4 rounded-full bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
-                                            >
-                                                Place Order
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div className="h-auto py-4">
                 <div className="grid gap-4 px-6 pt-20 md:grid-cols-4">
                     <div className="md:col-span-4">
